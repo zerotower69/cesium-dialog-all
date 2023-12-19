@@ -7,6 +7,7 @@ import legacy from '@vitejs/plugin-legacy';
 import pkg from './package.json';
 import dayjs from 'dayjs';
 import { createHtmlPlugin } from 'vite-plugin-html';
+import { viteExternalsPlugin } from 'vite-plugin-externals';
 
 const CWD = process.cwd();
 
@@ -60,6 +61,9 @@ export default (config) => {
             title: 'vue3 demo快速模版',
           },
         },
+      }),
+      viteExternalsPlugin({
+        cesium: 'Cesium',
       }),
       legacy({
         targets: ['defaults', 'not IE 11', 'chrome 79', 'maintained node versions'],

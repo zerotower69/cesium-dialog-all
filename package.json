@@ -6,7 +6,10 @@
     "lint": ""
   },
   "dependencies": {
-    "@common/common": "workspace:^1.0.0"
+    "@common/common": "workspace:^1.0.0",
+    "@turf/turf": "^6.5.0",
+    "cesium": "^1.105.2",
+    "lodash-es": "^4.17.21"
   },
   "keywords": [],
   "author": "zerotower",

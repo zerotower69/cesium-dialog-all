@@ -1,15 +1,22 @@
 <template>
   <div>
-    <p>vue3 快速demo搭建模板</p>
+    <div ref="cesiumRef" class="cesium-container"></div>
   </div>
 </template>
 
 <script setup>
-  import { Message } from '@common/common';
-  import { onMounted } from 'vue';
+  import { onMounted, ref } from 'vue';
+  import { CesiumWorld } from '@common/common';
+
+  const cesiumRef = ref();
   onMounted(() => {
-    const message = new Message('vue3 demo template running!');
-    message.print();
+    CesiumWorld.init(cesiumRef.value);
+    setTimeout(() => {
+      CesiumWorld.loadIcon();
+      CesiumWorld.clickPoint(() => {
+        //TODO:判断点位使用弹窗等
+      });
+    }, 1000);
   });
 </script>
 
