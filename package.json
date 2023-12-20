@@ -13,5 +13,8 @@
   },
   "keywords": [],
   "author": "zerotower",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12"
+  }
 }

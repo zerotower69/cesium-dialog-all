@@ -14,6 +14,7 @@
   "dependencies": {
     "core-js": "^3.33.3",
     "dayjs": "^1.11.10",
+    "element-ui": "^2.15.14",
     "vue": "^2.6.14",
     "vue-router": "^3.6.5",
     "vuex": "^3.6.2"
@@ -22,6 +23,7 @@
     "@babel/core": "^7.23.5",
     "@babel/eslint-parser": "^7.23.3",
     "@types/webpack": "^5.28.5",
+    "@unocss/webpack": "^0.58.0",
     "@vue/cli-plugin-babel": "~5.0.8",
     "@vue/cli-plugin-eslint": "~5.0.8",
     "@vue/cli-plugin-router": "~5.0.8",
@@ -40,7 +42,6 @@
     "speed-measure-webpack-plugin": "^1.5.0",
     "terser-webpack-plugin": "^5.3.9",
     "unocss": "^0.57.7",
-    "unplugin-vue-define-options": "^1.4.0",
     "vue-template-compiler": "^2.6.14",
     "webpack": "^5.89.0"
   },

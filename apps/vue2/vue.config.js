@@ -4,7 +4,7 @@ const webpack = require('webpack');
 const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 const dayjs = require('dayjs');
 const TerserPlugin = require('terser-webpack-plugin');
-const defineOptions = require('unplugin-vue-define-options/webpack');
+const unocss = require('@unocss/webpack').default;
 
 const resolve = (dir) => path.join(__dirname, dir); // 路径
 const pkg = require('./package.json');
@@ -86,6 +86,11 @@ module.exports = defineConfig({
     // 移除 prefetch 插件
     config.plugins.delete('prefetch');
 
+    //打包时排除cesium依赖
+    config.externals({
+      cesium: 'Cesium',
+    });
+
     // 优化二次启动速度
     config.cache({
       // 将缓存类型设置为文件系统,默认是memory
@@ -143,10 +148,7 @@ module.exports = defineConfig({
       }),
       // 打包速度分析
       new SpeedMeasurePlugin(),
-      // use defineOptions https://github.com/sxzz/unplugin-vue-define-options
-      defineOptions({
-        include: [/\.vue$/, /\.vue\?vue/],
-      }),
+      new unocss(),
     );
 
     if (IS_PROD) {
