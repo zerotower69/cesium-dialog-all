@@ -1,6 +1,7 @@
 import * as Cesium from 'cesium';
 import {isString} from "lodash-es";
 import * as turf from "@turf/turf"
+import * as cesium from "cesium";
 
 Cesium.Ion.defaultAccessToken =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3Y2YzMzhjNy03MmViLTRlNjItOWMzMi1mYzg3MmZkMGE5ZjYiLCJpZCI6MTIwNzI1LCJpYXQiOjE2NzMyNDczMDF9.FVuv-GXxuLCZvztzncNHaHhKyqYLQKaS1GO7v1MvtGU';
@@ -36,8 +37,17 @@ export const CesiumWorld = {
           preserveDrawingBuffer: true, // cesium状态下允许canvas转图片convertToImage
         },
       },
+       timeline:false, //刻度尺
+       animation:false,//动画仪表盘
       ...options,
     });
+    //使用世界地形
+    Cesium.createWorldTerrainAsync({
+      requestVertexNormals: true, //开启地形光照
+      requestWaterMask: true, // 开启水面波纹
+    }).then((provider)=>{
+      this.viewer.terrainProvider =provider
+    })
     this.viewer.imageryLayers.addImageryProvider(gaodeVecBaseMapLayer);
     this.viewer.imageryLayers.addImageryProvider(gaodeImgBaseMapLayer);
     this.viewer.camera.flyTo({
@@ -52,6 +62,7 @@ export const CesiumWorld = {
         roll: 0,
       }
     })
+    this.showCameraInfo()
   },
   clickPoint(callback) {
     const _this = this;
@@ -61,8 +72,8 @@ export const CesiumWorld = {
       //click.position 获取的是屏幕坐标
       // console.log('click',click)
       let cartesian = viewer.scene.pickPosition(click.position);
-      const point = _this.cartesian3ToWGS84(cartesian);
-      console.log('点击处的坐标为：',point)
+      // const point = _this.cartesian3ToWGS84(cartesian);
+      // console.log('点击处的坐标为：',point)
       let pickingEntity = viewer.scene.pick(click.position); //获取三维坐标和点击的实体对象
       // console.log('entity===>',pickingEntity)
       let coord = null;
@@ -112,11 +123,15 @@ export const CesiumWorld = {
       return _this.viewer.entities.add({
         name: "滁州北站",
         //118.3130465840632, latitude: 32.41150070937502, height: -6459.406066712726
-        position: Cesium.Cartesian3.fromDegrees(118.3130465840632, 32.41150070937502,-6459.406066712726),
+        position: Cesium.Cartesian3.fromDegrees( 118.327853, 32.308027,0),
         billboard: {
           image: canvas.toDataURL(),
+          // scale: 1.0,
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          disableDepthTestDistance:Infinity
+          rotation: 0,
+          heightReference:Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 60000)
         },
       });
     })
@@ -135,7 +150,73 @@ export const CesiumWorld = {
       latitude,
       height
     }
-  }
+  },
+  showCameraInfo(){
+    const viewer =this.viewer;
+    if(!document.getElementById('cesium-info')){
+      const container = document.createElement('div');
+      container.setAttribute('id','cesium-info');
+      container.setAttribute('style','position:fixed;bottom:10px;right:100px;color:white;background-color:#222;width:1100px;min-width:800px;height:24px;display:flex;justify-content:center;align-items:center;')
+      document.body.append(container)
+    }
+    new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas).setInputAction(function(event){
+      const point = new Cesium.Cartesian2(event.endPosition.x,event.endPosition.y);
+      if(point) {
+        const cartesian = viewer.scene.globe.pick(viewer.camera.getPickRay(point), viewer.scene);
+        if(cartesian) {
+          const cart = viewer.scene.globe.ellipsoid.cartesianToCartographic(cartesian);
+          if(cart) {
+            let e = viewer.scene.globe.getHeight(cart),
+                t = Math.sqrt(
+                    viewer.scene.camera.positionWC.x * viewer.scene.camera.positionWC.x +
+                    viewer.scene.camera.positionWC.y * viewer.scene.camera.positionWC.y +
+                    viewer.scene.camera.positionWC.z * viewer.scene.camera.positionWC.z
+                ),
+                i = Math.sqrt(cartesian.x * cartesian.x + cartesian.y * cartesian.y + cartesian.z * cartesian.z);
+                let r = [(cart.longitude / Math.PI) * 180, (cart.latitude / Math.PI) * 180];
+            (e = e || 0), (t = t || 0), (i = i || 0), (r = r || [0, 0]);
+            const cart2 = viewer.scene.camera.positionCartographic,
+                longitude = Cesium.Math.toDegrees(cart2.longitude).toFixed(6),
+                latitude = Cesium.Math.toDegrees(cart2.latitude).toFixed(6),
+                height = cart2.height.toFixed(2),
+                heading = Cesium.Math.toDegrees(viewer.scene.camera.heading),
+                pitch = Cesium.Math.toDegrees(viewer.scene.camera.pitch),
+                roll = Cesium.Math.toDegrees(viewer.scene.camera.roll),
+                cameraInfo =
+                    "相机坐标:(" +
+                    longitude +
+                    "," +
+                    latitude +
+                    "," +
+                    height +
+                    ") ,H:" +
+                    heading.toFixed(2) +
+                    ",P:" +
+                    pitch.toFixed(2) +
+                    ",R:" +
+                    roll.toFixed(2),
+                pointInfo =
+                    "视角海拔高度:" +
+                    (t - i).toFixed(2) +
+                    "米  海拔:" +
+                    e.toFixed(2) +
+                    "米  经度：" +
+                    r[0].toFixed(6) +
+                    " 纬度：" +
+                    r[1].toFixed(6);
+            if(document.getElementById('cesium-info')){
+              document.getElementById('cesium-info').innerHTML=`<span>${pointInfo}</span>&nbsp;&nbsp;<span>${cameraInfo}</span>`
+            } else{
+              const container = document.createElement('div');
+              container.setAttribute('id','cesium-info');
+              container.setAttribute('style','position:fixed;bottom:20px;right:100px;color:white;background-color:#222;')
+              document.body.append(container)
+            }
+          }
+        }
+      }
+    },Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+  },
 };
 
 //高德矢量地图数据图层，自带注记

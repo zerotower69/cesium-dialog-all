@@ -7,7 +7,7 @@
             <div class="trackModelTitle" :style="props.titleStyle">
               <div>{{ props.title }}</div>
             </div>
-            <img class="titleImage" :src="props.titleImage" alt="title" />
+            <img class="titleImage" src="./img/bg_title.png" alt="title" />
           </slot>
           <div
             class="closeIcon"
@@ -17,8 +17,8 @@
             @click="handleClose"
           >
             <!--          由于这里hover事件可能比较频繁，用v-show改善性能-->
-            <img v-show="!isHover" :src="props.closeImage" alt="closeImage" />
-            <img v-show="isHover" :src="props.closeOverImage" alt="closeOverImage" />
+            <img v-show="!isHover" src="./img/icon_close.png" alt="closeImage" />
+            <img v-show="isHover" src="./img/icon_close_click.png" alt="closeOverImage" />
           </div>
           <div class="trackModelBody">
             <slot></slot>
@@ -60,14 +60,6 @@
     afterClose: {
       type: Function,
     },
-    closeImage: {
-      type: String,
-      default: require('./img/icon_guanbi.png'),
-    },
-    closeOverImage: {
-      type: String,
-      default: require('./img/icon_guanbi_click.png'),
-    },
     closeStyle: {
       type: Object,
       default: () => ({
@@ -85,9 +77,9 @@
       type: Object,
       default: () => ({}),
     },
-    titleImage: {
-      type: String,
-      default: require('./img/bg_tanchuangtitle.png'),
+    duration: {
+      type: Number,
+      default: 1000,
     },
   });
 
@@ -131,6 +123,18 @@
   const styleLeft = computed(() => (props.left ? props.left + 'px' : 0));
   const styleWidth = computed(() => getStyleValue(props.width, 'fit-content'));
   const styleHeight = computed(() => getStyleValue(props.height, 'fit-content'));
+  const animationDuration = computed(() => {
+    if (isNumber(props.duration)) {
+      if (props.duration === 0) {
+        return '0s';
+      } else {
+        return props.duration / 1000 + 's';
+      }
+    } else {
+      //TODO:警告参数类型错误
+      return '0s';
+    }
+  });
   defineExpose({
     handleClose,
     handleOpen,
@@ -163,20 +167,22 @@
     //样式绑定
     width: v-bind(styleWidth) !important;
     height: v-bind(styleHeight) !important;
-    //animation-duration: 1.5s;
-    //animation-fill-mode: both;
-    //animation-name: moveIn;
+    min-width: 240px;
+    //通过样式绑定，让动画时间可以外部控制
+    animation-duration: v-bind(animationDuration);
+    animation-fill-mode: both;
+    animation-name: moveIn;
   }
 
   @keyframes moveIn {
     0% {
       opacity: 0;
-      transform-origin: 0 100%;
+      transform-origin: center bottom;
       transform: scale(0.2);
     }
     100% {
       opacity: 1;
-      transform-origin: 0 100%;
+      transform-origin: center bottom;
       transform: scale(1);
     }
   }

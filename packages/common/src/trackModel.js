@@ -1,7 +1,15 @@
 import * as Cesium from "cesium"
 import {isFunction, isNumber} from "lodash-es"
 import {setStyle} from "./common.js"
+
 export class TrackModel{
+
+    /**
+     * 弹窗id
+     * @type {number}
+     * @private
+     */
+    _uid
     /**
      * 弹窗根DOM
      * @type {HTMLElement}
@@ -32,6 +40,20 @@ export class TrackModel{
     _offset
 
     /**
+     * 飞行偏移量
+     * @type {}
+     * @private
+     */
+    _flyOffset
+
+    /**
+     * 飞行姿态
+     * @type {Partial<import('track-model').Direction>}
+     * @private
+     */
+    _flyDirection
+
+    /**
      * 监听函数
      * @type {null | (() => void)}
      * @private
@@ -55,21 +77,23 @@ export class TrackModel{
      * @type {number}
      * @private
      */
-    _uid
+    uid
 
     /**
      * 传入的选项参数
-     * @type {import('track-model').CreateOptions}
+     * @type {import('track-model').TrackModelOptions}
      * @private
      */
     _options
 
     /**
      *
-     * @param {import('track-model').CreateOptions} options
+     * @param {import('track-model').TrackModelOptions} options
      */
     constructor(options) {
         this._options =options
+        //初始化
+        this._init()
     }
 
     /**
@@ -82,33 +106,47 @@ export class TrackModel{
     }
 
     /**
-     *
-     * @param {{longitude:number;latitude:number;height?;number}} coord
-     * @param {{longitude?:number;latitude?:number;height?:number}} flyOffset
-     * @param {{heading?:number;pitch?:number;roll?:number}} directOptions
-     * @param {null |((...args:any)=>any)} completeCallback
+     * 相机飞行到指定的位置
      */
-    flyToPoint(coord,flyOffset,directOptions,completeCallback=null){
+    flyToPoint(){
+        const _this = this;
+        const options = this._options;
+        const longitude = options.coordinate.longitude +(options?.flyOffset?.longitude ?? 0);
+        const latitude =options.coordinate.latitude+(options?.flyOffset?.latitude ?? 0);
+        const height =(options?.coordinate?.height ??0) +(options?.flyOffset?.height ?? 0);
         const viewer =this._viewer;
-        const heading = isNumber(directOptions?.heading)? Cesium.Math.toRadians(directOptions.heading):viewer.camera.heading;
-        const pitch =isNumber(directOptions?.pitch)? Cesium.Math.toRadians(directOptions.pitch):viewer.camera.pitch;
-        viewer.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(
-                coord.longitude +(flyOffset?.longitude ?? 0),
-                coord.latitude - (flyOffset?.latitude ?? 0),
-                flyOffset?.height ?? 0
-            ),
-            orientation: {
-                heading: heading,
-                pitch: pitch,
-                roll: directOptions?.roll ?? 0
-            },
-            complete:function(){
-                if(isFunction(completeCallback)){
-                    completeCallback.call(null)
-                }
+        const heading = isNumber(options?.flyOffset?.heading)? Cesium.Math.toRadians(options.flyOffset.heading):viewer.camera.heading;
+        const pitch =isNumber(options?.flyOffset?.pitch)? Cesium.Math.toRadians(options.flyOffset.pitch):viewer.camera.pitch;
+        const roll = isNumber(options?.flyOffset?.roll)? options.flyOffset.roll : 0;
+
+        const flyOptions={
+            destination:Cesium.Cartesian3.fromDegrees(longitude,latitude,height),
+            orientation:{
+                heading,
+                pitch,
+                roll
             }
-        })
+        };
+        if(options.show === 'afterFly'){
+            flyOptions.complete=function (){
+                _this._mountedModel()
+                let screen = _this._viewer.scene.cartesianToCanvasCoordinates(_this._position);
+
+                _this._updateStyle(screen,_this._offset)
+            }
+        }
+        if(isNumber(options?.flyOffset?.duration)){
+            flyOptions.duration = options.flyOffset.duration
+        }
+        viewer.camera.flyTo(flyOptions)
+    }
+
+    /**
+     * 关闭弹窗
+     */
+    close(){
+        this._$el?.remove?.()
+        this._clearListener()
     }
 
     /**
@@ -117,25 +155,51 @@ export class TrackModel{
      */
     _init(){
         const options = this._options;
+        this.uid = options.id;
         //set viewer instance
         this._viewer= options.viewer
+        //set root element
+        this._$el = options.rootEl
+        this._$content =options.contentEl
         //set model offset
         this._offset={
             x:options?.offset?.x ?? 0,
-            y:options?.offset?.y ?? 0
+            y:options?.offset?.y ?? 0,
+            height:options?.height ?? 0
         }
+        //set position
+        this._position =new Cesium.Cartesian3.fromDegrees(options.coordinate.longitude, options.coordinate.latitude, options?.coordinate?.height ?? 0);
+        //set scale
+        if(options.autoScale){
+            this._scaleByDistance= options?.scaleByDistance
+            this._distanceDisplayCondition =options?.distanceDisplayCondition
+        }
+        //mounted dom to widget
+        if(options.show === 'beforeFly' || (!options.fly && options.show === 'afterFly')){
+            //show为beforeFly 飞之前渲染弹窗，当不飞但是把show设置为了afterFly也要渲染弹窗
+            //TODO:后面的情况在开发模式中抛出警告
+            this._mountedModel()
+        }
+        //要飞就去飞吧
+        if(options.fly){
+            this.flyToPoint()
+        }
+        //设置监听器
+        this._setListener()
     }
 
     /**
      * 设置回调
-     * @param {{ x: number; y: number; height?: number }} popPoint
      * @private
      */
-    _setListener(popPoint){
+    _setListener(){
         const _this =this;
         const options = this._options;
-        const cartesian = new Cesium.Cartesian3.fromDegrees(popPoint.x, popPoint.y, popPoint.height);
-        this._position = cartesian;
+        const popPoint ={
+            x:options?.coordinate?.longitude,
+            y:options?.coordinate?.latitude,
+            height:options?.coordinate?.height ?? 0
+        }
         let screenPoint = popPoint;
         //每一帧渲染结束后，都去更新弹窗的位置
         this._moveListener= function (){
@@ -187,7 +251,7 @@ export class TrackModel{
      */
     _updateStyle(screen,offset){
         const options=this._options
-        const el = this._$el
+        const el = this._$content
         const viewer = this._viewer
         //set translate3d
         let offsetX = el.offsetWidth / 2 - (offset?.x ?? 0);

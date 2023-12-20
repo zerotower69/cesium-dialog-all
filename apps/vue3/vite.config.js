@@ -58,7 +58,7 @@ export default (config) => {
         minify: true,
         inject: {
           data: {
-            title: 'vue3 demo快速模版',
+            title: 'vue3 +cesium 实现跟随弹窗',
           },
         },
       }),

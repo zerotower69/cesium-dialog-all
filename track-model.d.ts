@@ -1,9 +1,15 @@
 declare module 'track-model'{
     //@ts-ignore
     import {Viewer,DistanceDisplayCondition,NearFarScalar} from "cesium"
-    type CreateOptions = {
+    interface TrackModelOptions  {
+        //弹窗唯一的id标识
+        id:number;
+        //弹窗根DOM
+        rootEl:Element;
+        //弹窗内容区根DOM
+        contentEl:Element
         //cesium viewer对象，不传就使用全局的Viewer实例
-        viewer?: Viewer
+        viewer: Viewer
         //点位坐标,lon:经度，lat:纬度，height:高度
         coordinate: {longitude: number; latitude: number; height?: number };
         //弹窗位置的屏幕坐标偏移量，单位：px
@@ -14,11 +20,11 @@ declare module 'track-model'{
         fly?: boolean;
         //飞行的点位偏移量(相机位置)以及方向调整，lon,lat,height是指定的偏移量
         flyOffset?: {
-            //偏移的经度,相对于coord.lon，默认为0
-            lon?: number;
-            //相对于coord.lat偏移的纬度，默认为0
-            lat?: number;
-            //相对于coord.height偏移的高度，默认为6000
+            //偏移的经度,相对于coordinate.longitude，默认为0
+            longitude?: number;
+            //相对于coordinate.latitude偏移的纬度，默认为0
+            latitude?: number;
+            //相对于coordinate.height偏移的高度，默认为6000
             height?: number;
             //相机方位的heading，默认为当前相机方位heading
             heading?: number;
@@ -26,6 +32,8 @@ declare module 'track-model'{
             pitch?: number;
             //相机方位的roll，默认为当前相机方位的roll，通常是0
             roll?: number;
+            //flyTo的飞行时间duration
+            duration?:number
         };
         //相机飞行后执行的complete回调函数
         completeCallback?: (...args) => void;
@@ -39,8 +47,11 @@ declare module 'track-model'{
         distanceDisplayCondition?: DistanceDisplayCondition;
         //通过距离决定缩放比例
         scaleByDistance?: NearFarScalar;
-    };
-    //创建trackModel实例需要传递的参数
-    type InstanceOptions={};
-    export {CreateOptions,InstanceOptions}
+    }
+    type Direction ={
+        heading:number;
+        pitch:number;
+        roll:number;
+    }
+    export {TrackModelOptions,Direction}
 }

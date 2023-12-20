@@ -1,15 +1,20 @@
 import { TrackModel } from '@common/common';
-import {} from 'vue';
 
 export class Vue3TrackModel extends TrackModel {
   /**
    * @type {import('vue').VNode}
+   * @private
    */
   _vNode;
 
   /**
-   *
-   * @param options
+   * @type {import('vue').ComponentInternalInstance}
+   * @private
+   */
+  _vm;
+
+  /**
+   * @param {import('@vue3/track-model').Vue3TrackModelOptions} options
    */
   constructor(options) {
     super(options);
@@ -21,5 +26,6 @@ export class Vue3TrackModel extends TrackModel {
    */
   setVNode(vNode) {
     this._vNode = vNode;
+    this._vm = vNode.component;
   }
 }
