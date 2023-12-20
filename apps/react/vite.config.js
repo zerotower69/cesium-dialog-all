@@ -7,6 +7,7 @@ import legacy from "@vitejs/plugin-legacy";
 import pkg from "./package.json";
 import dayjs from "dayjs";
 import { createHtmlPlugin } from "vite-plugin-html";
+import { viteExternalsPlugin } from "vite-plugin-externals";
 
 const CWD = process.cwd();
 
@@ -53,6 +54,9 @@ export default (config) => {
     plugins: [
       react(),
       Unocss(),
+      viteExternalsPlugin({
+        cesium: "Cesium",
+      }),
       createHtmlPlugin({
         minify: true,
         inject: {
