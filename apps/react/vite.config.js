@@ -61,7 +61,7 @@ export default (config) => {
         minify: true,
         inject: {
           data: {
-            title: "react demo快速模版",
+            title: "react+cesium 实现点位跟随弹窗",
           },
         },
       }),

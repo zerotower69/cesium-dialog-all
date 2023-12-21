@@ -110,7 +110,7 @@ module.exports = defineConfig({
     // 配置相关loader，支持修改，添加和替换相关的loader
 
     config.plugin('html').tap((args) => {
-      args[0].title = 'vue2 快速启动模板';
+      args[0].title = 'vue2+cesium 实现跟随点位弹窗';
       return args;
     });
 

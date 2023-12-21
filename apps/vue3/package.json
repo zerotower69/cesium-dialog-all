@@ -3,9 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "vue3:dev": "vite",
+    "vue3:build": "vite build",
+    "vue3:preview": "vite preview"
   },
   "dependencies": {
     "@turf/turf": "^6.5.0",

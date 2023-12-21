@@ -250,6 +250,7 @@ export class TrackModel{
      * @private
      */
     _updateStyle(screen,offset){
+        console.log('execute updateStyle')
         //防止错误
         if(isUndefined(screen) || isUndefined(screen.x) || isUndefined(screen.y)){
             //TODO:抛出警告
@@ -341,8 +342,9 @@ export class TrackModel{
         const viewer = this._viewer;
         const screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
         this._updateStyle(screen, _this._offset);
-        const $widgetEl = this._viewer.cesiumWidget.container;
-        $widgetEl.appendChild(this._$el)
+        // const $widgetEl = this._viewer.cesiumWidget.container;
+        // $widgetEl.appendChild(this._$el)
+        document.body.appendChild(this._$el)
         Promise.resolve().then(()=>{
             _this._mounted = true;
             _this._watchDOMChange();
@@ -359,17 +361,16 @@ export class TrackModel{
         if (this._mounted && options.useObserver) {
             const viewer = this._viewer;
             const offset = this._offset;
-            let screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
             //使用MutationObserver观察内容区trackModelContent以及所有子节点的变化，子节点发生了变化了，其实就是弹窗大小变化了的，手动触发一次updateTrackModelStyle
             const observer = new MutationObserver(function (mutations, observer) {
                 // console.log(mutations, observer);
+                const screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
                 for (const mutation of mutations) {
-                    if (mutation.target !== _this._$content) {
-                        if (!screen) {
-                            screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
+                    if (mutation.target === _this._$content) {
+                        if (screen) {
+                            _this._updateStyle(screen, offset);
+                            break;
                         }
-                        _this._updateStyle(screen, offset);
-                        break;
                     }
                 }
             });

@@ -2,7 +2,7 @@ import "./App.css";
 import { CesiumWorld } from "@common/common";
 import { useEffect } from "react";
 import * as Cesium from "cesium";
-import { createTrackModel } from "@/componets/TrackModel/index.jsx";
+import { createTrackModel } from "@/componets/TrackModel";
 function App() {
   useEffect(() => {
     const container = document.getElementById("cesiumContainer");
@@ -48,6 +48,7 @@ function App() {
   return (
     <>
       <div className="cesium-container" id="cesiumContainer"></div>
+      <div id="trackModelContainer"></div>
     </>
   );
 }
