@@ -250,7 +250,7 @@ export class TrackModel{
      * @private
      */
     _updateStyle(screen,offset){
-        console.log('execute updateStyle')
+        // console.log('execute updateStyle')
         //防止错误
         if(isUndefined(screen) || isUndefined(screen.x) || isUndefined(screen.y)){
             //TODO:抛出警告

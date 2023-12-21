@@ -1,0 +1,36 @@
+$model-z-index:1;
+.trackModel {
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  user-select: none;
+}
+
+.titleImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.trackModelContent {
+  position: absolute;
+  z-index: $model-z-index;
+}
+.content-box{
+  min-width: 240px;
+}
+.closeIcon{
+}
+
+@keyframes moveIn {
+  0% {
+    opacity: 0;
+    transform-origin: center bottom;
+    transform: scale(0.2);
+  }
+  100% {
+    opacity: 1;
+    transform-origin: center bottom;
+    transform: scale(1);
+  }
+}
