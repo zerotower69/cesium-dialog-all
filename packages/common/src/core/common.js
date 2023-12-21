@@ -33,3 +33,11 @@ export const setStyle = (element, styleName, value = "") => {
  * @return {import('type-fest').Entries<T>}
  */
 export const entriesOf = (arr) => Object.entries(arr);
+
+//define self Error class.
+export class TrackModelError extends Error{
+    constructor(message) {
+        super(message);
+        this.name = 'TrackModelError'
+    }
+}

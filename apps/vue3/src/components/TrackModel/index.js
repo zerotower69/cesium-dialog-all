@@ -249,7 +249,7 @@ function loadAllContentComponents() {
   // const map = new Map();
   // files.keys().forEach((key) => {
   //   const mod = files(key).default;
-  //   const name = mod?.name ?? key.replace("./", "").replace(".vue", "");
+  //   const name = mod?.name ?? key.replace("./", "").replace(".vue", ""):
   //   if (mod) {
   //     map.set(name, mod);
   //   }

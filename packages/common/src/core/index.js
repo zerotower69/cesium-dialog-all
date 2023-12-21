@@ -1,15 +1,20 @@
 import * as Cesium from "cesium"
-import {isFunction, isNumber} from "lodash-es"
+import {isNumber, isUndefined} from "lodash-es"
 import {setStyle} from "./common.js"
+
+/**
+ * 默认options
+ * @type {import('track-model').TrackModelOptions}
+ */
+const defaultOptions={
+    fly:false,
+    show:'beforeFly',
+    useObserver:true,
+    autoScale:false
+}
 
 export class TrackModel{
 
-    /**
-     * 弹窗id
-     * @type {number}
-     * @private
-     */
-    _uid
     /**
      * 弹窗根DOM
      * @type {HTMLElement}
@@ -20,6 +25,12 @@ export class TrackModel{
      * @type {HTMLElement}
      */
     _$content
+
+    /**
+     * 弹窗uid
+     * @type {number}
+     */
+    uid
     /**
      * viewer对象
      * @type {import('cesium').Viewer}
@@ -38,20 +49,6 @@ export class TrackModel{
      * @private
      */
     _offset
-
-    /**
-     * 飞行偏移量
-     * @type {}
-     * @private
-     */
-    _flyOffset
-
-    /**
-     * 飞行姿态
-     * @type {Partial<import('track-model').Direction>}
-     * @private
-     */
-    _flyDirection
 
     /**
      * 监听函数
@@ -74,12 +71,6 @@ export class TrackModel{
     _scaleByDistance
 
     /**
-     * @type {number}
-     * @private
-     */
-    uid
-
-    /**
      * 传入的选项参数
      * @type {import('track-model').TrackModelOptions}
      * @private
@@ -87,11 +78,28 @@ export class TrackModel{
     _options
 
     /**
+     * 加载完成?
+     * @type {boolean}
+     * @private
+     */
+    _loaded;
+
+    /**
+     * 弹窗已经挂载
+     * @type {boolean}
+     * @private
+     */
+    _mounted;
+
+    /**
      *
      * @param {import('track-model').TrackModelOptions} options
      */
     constructor(options) {
-        this._options =options
+        this._options ={
+            ...defaultOptions,
+            ...options
+        }
         //初始化
         this._init()
     }
@@ -155,6 +163,8 @@ export class TrackModel{
      */
     _init(){
         const options = this._options;
+        this._loaded = false;
+        this._mounted = false;
         this.uid = options.id;
         //set viewer instance
         this._viewer= options.viewer
@@ -168,7 +178,11 @@ export class TrackModel{
             height:options?.height ?? 0
         }
         //set position
-        this._position =new Cesium.Cartesian3.fromDegrees(options.coordinate.longitude, options.coordinate.latitude, options?.coordinate?.height ?? 0);
+        this._position =new Cesium.Cartesian3.fromDegrees(
+            options.coordinate.longitude,
+            options.coordinate.latitude,
+            options?.coordinate?.height ?? 0
+        );
         //set scale
         if(options.autoScale){
             this._scaleByDistance= options?.scaleByDistance
@@ -186,6 +200,8 @@ export class TrackModel{
         }
         //设置监听器
         this._setListener()
+        //用变量设置加载完成了
+        this._loaded=true
     }
 
     /**
@@ -195,16 +211,16 @@ export class TrackModel{
     _setListener(){
         const _this =this;
         const options = this._options;
-        const popPoint ={
+        const viewer = this._viewer
+        let screenPoint = {
             x:options?.coordinate?.longitude,
             y:options?.coordinate?.latitude,
             height:options?.coordinate?.height ?? 0
         }
-        let screenPoint = popPoint;
         //每一帧渲染结束后，都去更新弹窗的位置
         this._moveListener= function (){
             //84坐标转屏幕坐标
-            let screen = _this._viewer.scene.cartesianToCanvasCoordinates(_this._position);
+            let screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
             if (screen) {
                 if (screenPoint.x !== screen.x || screenPoint.y !== screen.y) {
                     //坐标发生变化就去更新弹窗位置
@@ -214,22 +230,6 @@ export class TrackModel{
             }
         }
         this._viewer.scene.postRender.addEventListener(this._moveListener)
-        //使用MutationObserver观察内容区trackModelContent以及所有子节点的变化，子节点发生了变化了，其实就是弹窗大小变化了的，手动触发一次updateTrackModelStyle
-        const observer = new MutationObserver(function (mutations, observer) {
-            // console.log(mutations, observer);
-            for (const mutation of mutations) {
-                if (mutation.target !== _this._$content) {
-                    const screen = _this._viewer.scene.cartesianToCanvasCoordinates(_this._position);
-                    _this._updateStyle(screen, _this._offset);
-                    break;
-                }
-            }
-        });
-        observer.observe(this._$content, {
-            childList: true,
-            subtree: true,
-            attributes: true
-        });
     }
 
     /**
@@ -250,6 +250,11 @@ export class TrackModel{
      * @private
      */
     _updateStyle(screen,offset){
+        //防止错误
+        if(isUndefined(screen) || isUndefined(screen.x) || isUndefined(screen.y)){
+            //TODO:抛出警告
+            return
+        }
         const options=this._options
         const el = this._$content
         const viewer = this._viewer
@@ -291,7 +296,6 @@ export class TrackModel{
                     scaleY = scale;
                 }
             }
-            //TODO:重新计算偏移量
             scale3d = `scale3d(${scaleX},${scaleY},1)`;
         }
 
@@ -316,8 +320,16 @@ export class TrackModel{
         });
     }
 
-    _isBetween(e, t, i){
-        return (e = parseFloat(e) || 0) >= parseFloat(t) && e <= parseFloat(i);
+    /**
+     * 某个值b在区间[a,c]里
+     * @param a
+     * @param b
+     * @param c
+     * @return {boolean}
+     * @private
+     */
+    _isBetween(a, b, c){
+        return (a = parseFloat(a) || 0) >= parseFloat(b) && a <= parseFloat(c);
     }
 
     /**
@@ -325,8 +337,48 @@ export class TrackModel{
      * @private
      */
     _mountedModel(){
+        const _this = this;
+        const viewer = this._viewer;
+        const screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
+        this._updateStyle(screen, _this._offset);
         const $widgetEl = this._viewer.cesiumWidget.container;
         $widgetEl.appendChild(this._$el)
+        Promise.resolve().then(()=>{
+            _this._mounted = true;
+            _this._watchDOMChange();
+        })
+    }
+
+    /**
+     * 使用MutationObserver观察内容区的变化
+     * @private
+     */
+    _watchDOMChange() {
+        const _this = this;
+        const options = this._options;
+        if (this._mounted && options.useObserver) {
+            const viewer = this._viewer;
+            const offset = this._offset;
+            let screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
+            //使用MutationObserver观察内容区trackModelContent以及所有子节点的变化，子节点发生了变化了，其实就是弹窗大小变化了的，手动触发一次updateTrackModelStyle
+            const observer = new MutationObserver(function (mutations, observer) {
+                // console.log(mutations, observer);
+                for (const mutation of mutations) {
+                    if (mutation.target !== _this._$content) {
+                        if (!screen) {
+                            screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
+                        }
+                        _this._updateStyle(screen, offset);
+                        break;
+                    }
+                }
+            });
+            observer.observe(this._$content, {
+                childList: true,
+                subtree: true,
+                attributes: true
+            });
+        }
     }
 
 }

@@ -10,6 +10,8 @@ declare module 'track-model'{
         contentEl:Element
         //cesium viewer对象，不传就使用全局的Viewer实例
         viewer: Viewer
+        //使用MutationObserver观察内容区DOM的变化，默认为true
+        useObserver?:boolean
         //点位坐标,lon:经度，lat:纬度，height:高度
         coordinate: {longitude: number; latitude: number; height?: number };
         //弹窗位置的屏幕坐标偏移量，单位：px
