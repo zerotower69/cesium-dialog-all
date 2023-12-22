@@ -1,28 +1,26 @@
 <template>
   <transition name="track">
     <div v-if="visible" class="trackModel" :style="cssVars">
-      <div class="trackModelContent">
-        <div :style="contentStyle" class="content-box move-in">
-          <slot name="title">
-            <div class="trackModelTitle" :style="titleStyle">
-              <div>{{ title }}</div>
-            </div>
-            <img class="titleImage" src="./img/bg_title.png" alt="title" />
-          </slot>
-          <div
-            class="closeIcon"
-            :style="closeStyle"
-            @mouseover="isHover = true"
-            @mouseleave="isHover = false"
-            @click="handleClose"
-          >
-            <!--          由于这里hover事件可能比较频繁，用v-show改善性能-->
-            <img v-show="!isHover" src="./img/icon_close.png" alt="closeImage" />
-            <img v-show="isHover" src="./img/icon_close_click.png" alt="closeOverImage" />
+      <div :style="contentStyle" class="trackModelContent move-in">
+        <slot name="title">
+          <div class="trackModelTitle" :style="titleStyle">
+            <div>{{ title }}</div>
           </div>
-          <div class="trackModelBody">
-            <slot></slot>
-          </div>
+          <img class="titleImage" src="./img/bg_title.png" alt="title" />
+        </slot>
+        <div
+          class="closeIcon"
+          :style="closeStyle"
+          @mouseover="isHover = true"
+          @mouseleave="isHover = false"
+          @click="handleClose"
+        >
+          <!--          由于这里hover事件可能比较频繁，用v-show改善性能-->
+          <img v-show="!isHover" src="./img/icon_close.png" alt="closeImage" />
+          <img v-show="isHover" src="./img/icon_close_click.png" alt="closeOverImage" />
+        </div>
+        <div class="trackModelBody">
+          <slot></slot>
         </div>
       </div>
     </div>
@@ -142,10 +140,15 @@
 <style scoped lang="scss">
   @import 'track-model';
   .trackModel {
-    width: 100%;
-    height: 100%;
+    width: fit-content;
+    height: fit-content;
     color: #fff;
     user-select: none;
+    position: absolute;
+    z-index: $model-z-index;
+    //样式绑定
+    top: var(--top);
+    left: var(--left);
   }
 
   .titleImage {
@@ -153,15 +156,7 @@
     top: 0;
     left: 0;
   }
-
   .trackModelContent {
-    position: absolute;
-    z-index: $model-z-index;
-    //样式绑定
-    top: var(--top);
-    left: var(--left);
-  }
-  .content-box {
     //样式绑定
     width: var(--width) !important;
     height: var(--height) !important;

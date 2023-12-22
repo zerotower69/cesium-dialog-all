@@ -1,4 +1,5 @@
 import { TrackModel } from '@common/common';
+import { isNumber } from 'lodash-es';
 
 export class Vue3TrackModel extends TrackModel {
   /**
@@ -17,6 +18,10 @@ export class Vue3TrackModel extends TrackModel {
    * @param {import('@vue3/track-model').Vue3TrackModelOptions} options
    */
   constructor(options) {
+    if (isNumber(options.duration)) {
+      options.observerDuration = options.duration;
+    }
+    Reflect.deleteProperty(options, 'duration');
     super(options);
   }
 

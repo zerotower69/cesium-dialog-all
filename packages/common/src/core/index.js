@@ -1,6 +1,6 @@
 import * as Cesium from "cesium"
 import {isNumber, isUndefined} from "lodash-es"
-import {setStyle} from "./common.js"
+import {handleWarning, setStyle} from "./common.js"
 
 /**
  * 默认options
@@ -16,15 +16,14 @@ const defaultOptions={
 export class TrackModel{
 
     /**
-     * 弹窗根DOM
+     * 弹窗根DOM wrapper层
      * @type {HTMLElement}
      */
-    _$el
+    _$root
+
     /**
-     * 内容区根dom
-     * @type {HTMLElement}
+     *
      */
-    _$content
 
     /**
      * 弹窗uid
@@ -105,6 +104,16 @@ export class TrackModel{
     }
 
     /**
+     * 手动挂载节点，以支持某些异步渲染框架的情况
+     * @param {HTMLElement} rootEl
+     * @param {boolean} mounted 是否在TrackModel外部完成了挂载，这样TrackModel就不会自行挂载了
+     */
+    setRootEl(rootEl,mounted=false){
+        this._$root = rootEl
+        this._mounted=mounted
+    }
+
+    /**
      * 更新弹窗的位置
      * @type {import('cesium').Cartesian3}
      * @param position
@@ -138,9 +147,6 @@ export class TrackModel{
         if(options.show === 'afterFly'){
             flyOptions.complete=function (){
                 _this._mountedModel()
-                let screen = _this._viewer.scene.cartesianToCanvasCoordinates(_this._position);
-
-                _this._updateStyle(screen,_this._offset)
             }
         }
         if(isNumber(options?.flyOffset?.duration)){
@@ -150,10 +156,15 @@ export class TrackModel{
     }
 
     /**
-     * 关闭弹窗
+     * 销毁弹窗
      */
-    close(){
-        this._$el?.remove?.()
+    destroy(){
+        if(!this._$root || !this._mounted){
+            //为挂载销毁给出警告
+           handleWarning("The TrackModel doesn't finish mounting, please use [destroy] method later.")
+            return
+        }
+        this._$root?.remove?.()
         this._clearListener()
     }
 
@@ -166,11 +177,13 @@ export class TrackModel{
         this._loaded = false;
         this._mounted = false;
         this.uid = options.id;
+        //说明一下,指定弹窗的根DOM可以在初始化完成，也可以通过setMountEl完成，但总要选择一样
+        //之所以这样设计，是为了适配更多的框架，例如react
+        if(options.rootEl){
+            this._$root = options.rootEl
+        }
         //set viewer instance
         this._viewer= options.viewer
-        //set root element
-        this._$el = options.rootEl
-        this._$content =options.contentEl
         //set model offset
         this._offset={
             x:options?.offset?.x ?? 0,
@@ -198,8 +211,6 @@ export class TrackModel{
         if(options.fly){
             this.flyToPoint()
         }
-        //设置监听器
-        this._setListener()
         //用变量设置加载完成了
         this._loaded=true
     }
@@ -217,10 +228,12 @@ export class TrackModel{
             y:options?.coordinate?.latitude,
             height:options?.coordinate?.height ?? 0
         }
+         let screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
+        _this._updateStyle(screen,_this._offset);
         //每一帧渲染结束后，都去更新弹窗的位置
         this._moveListener= function (){
             //84坐标转屏幕坐标
-            let screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
+            screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
             if (screen) {
                 if (screenPoint.x !== screen.x || screenPoint.y !== screen.y) {
                     //坐标发生变化就去更新弹窗位置
@@ -250,14 +263,17 @@ export class TrackModel{
      * @private
      */
     _updateStyle(screen,offset){
-        console.log('execute updateStyle')
         //防止错误
         if(isUndefined(screen) || isUndefined(screen.x) || isUndefined(screen.y)){
             //TODO:抛出警告
             return
         }
         const options=this._options
-        const el = this._$content
+        const el = this._$root
+        if(!el || !this._mounted){
+            //挂载操作还没结束
+            return
+        }
         const viewer = this._viewer
         //set translate3d
         let offsetX = el.offsetWidth / 2 - (offset?.x ?? 0);
@@ -338,17 +354,24 @@ export class TrackModel{
      * @private
      */
     _mountedModel(){
+        if(!this._$root){
+            handleWarning('You must set the mounted HTMLElement, the mounting has been stopped.')
+            return
+        }
+        const options = this._options
         const _this = this;
-        const viewer = this._viewer;
-        const screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
-        this._updateStyle(screen, _this._offset);
-        // const $widgetEl = this._viewer.cesiumWidget.container;
-        // $widgetEl.appendChild(this._$el)
-        document.body.appendChild(this._$el)
-        Promise.resolve().then(()=>{
+        if(!this._mounted){
+            document.body.appendChild(this._$root)
             _this._mounted = true;
-            _this._watchDOMChange();
+        }
+        //设置异步监听DOM的原因是初始化DOM造成的变化不需要被监听,并防止初始动画造成的DOM变化被监听
+        Promise.resolve().then(()=>{
+            //设置监听器
+            this._setListener()
         })
+       setTimeout(()=>{
+           _this._watchDOMChange();
+       },isNumber(options.observerDuration)?options.observerDuration:0)
     }
 
     /**
@@ -361,12 +384,14 @@ export class TrackModel{
         if (this._mounted && options.useObserver) {
             const viewer = this._viewer;
             const offset = this._offset;
+            //监听DOM
+            const watchEl = options?.observerEl ?? this._$root;
             //使用MutationObserver观察内容区trackModelContent以及所有子节点的变化，子节点发生了变化了，其实就是弹窗大小变化了的，手动触发一次updateTrackModelStyle
             const observer = new MutationObserver(function (mutations, observer) {
                 // console.log(mutations, observer);
                 const screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
                 for (const mutation of mutations) {
-                    if (mutation.target === _this._$content) {
+                    if (mutation.target !== watchEl) {
                         if (screen) {
                             _this._updateStyle(screen, offset);
                             break;
@@ -374,7 +399,7 @@ export class TrackModel{
                     }
                 }
             });
-            observer.observe(this._$content, {
+            observer.observe(watchEl, {
                 childList: true,
                 subtree: true,
                 attributes: true

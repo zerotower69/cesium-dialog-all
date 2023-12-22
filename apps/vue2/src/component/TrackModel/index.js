@@ -185,12 +185,10 @@ export function createTrackModel(slot, options, modelProps) {
   vm.$mount(rootEl);
 
   const $el = vm.$el;
-  const $content = $el.querySelector('.trackModelContent');
 
   //step3: 实例化TrackModel
   const instance = new Vue2TrackModel({
     rootEl: $el,
-    contentEl: $content,
     id: instanceId,
     ...options,
   });

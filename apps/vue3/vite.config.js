@@ -42,6 +42,7 @@ export default (config) => {
           replacement: resolve(__dirname, './src'),
         },
       ],
+      extensions: ['.js', '.vue', '.jsx'],
     },
     server: {
       host: 'localhost',

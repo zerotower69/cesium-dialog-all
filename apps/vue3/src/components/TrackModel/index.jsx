@@ -1,6 +1,6 @@
-import ModelConstructor from './ModelWrapper.vue';
+import TrackModelConstructor from './TrackModel.vue';
 import { isFunction, isNumber, isObject } from 'lodash-es';
-import { h, createVNode, render, getCurrentInstance } from 'vue';
+import { h, createVNode, render, getCurrentInstance, createApp } from 'vue';
 import { Vue3TrackModel } from '@/components/TrackModel/track-model';
 
 /**
@@ -156,7 +156,7 @@ export function createTrackModel(slot, options, modelProps) {
     //找到对应的实例
     const selfInstance = getModelInstanceById(instanceId);
     //执行弹窗自带的关闭方法
-    selfInstance?.close?.();
+    selfInstance?.destroy?.();
     //执行传入的关闭方法
     modelProps?.afterClose?.();
   };
@@ -181,20 +181,21 @@ export function createTrackModel(slot, options, modelProps) {
     //TODO:移除当前存在的弹窗
     while (modelInstances.length) {
       const getInstance = modelInstances.shift();
-      getInstance?.close();
+      getInstance?.destroy();
     }
   }
   //step2: 将组件渲染为VNode
+  //*获取应用上下文
+  const context = getCurrentInstance()?.appContext ?? globalAppContext;
   //*组件构建虚拟DOM
   const vNode = createVNode(
-    ModelConstructor,
+    TrackModelConstructor,
     {
       ...renderModelProps,
     },
     slot,
   );
-  //*设置应用上下文
-  const context = getCurrentInstance()?.appContext ?? globalAppContext;
+  //设置上下文
   //console.log(context)
   vNode.appContext = context;
   //*指定挂载对象，处理为真实的DOM
@@ -202,15 +203,14 @@ export function createTrackModel(slot, options, modelProps) {
   //渲染为html
   render(vNode, rootEl);
   const $appendEl = rootEl.firstElementChild;
-  const $contentEl = $appendEl.querySelector('.trackModelContent');
   //*到这里，vue3的处理逻辑就结束了，剩下的过程已经是原生部分，任何框架下都一样了
   //step3:实例化trackModel
   const instance = new Vue3TrackModel({
     id: instanceId,
     rootEl: $appendEl,
-    contentEl: $contentEl,
     ...options,
   });
+  vNode.component.exposed.instance = instance;
   instance.setVNode(vNode);
   modelInstances.push(instance);
 
@@ -221,6 +221,10 @@ export function createTrackModel(slot, options, modelProps) {
   function updatePosition(cartesian) {
     return instance.updatePosition(cartesian);
   }
+  return {
+    destroy: instance.destroy,
+    updatePosition,
+  };
 }
 
 /**
@@ -271,6 +275,6 @@ function getModelInstanceById(id) {
  */
 export function closeAllModel() {
   modelInstances.forEach((instance) => {
-    instance?.close();
+    instance?.destroy();
   });
 }

@@ -180,7 +180,7 @@ export function createTrackModel(content, options, modelProps) {
     const rootEl = document.createElement("div");
     document.body.appendChild(rootEl);
     let instance;
-    function TrackModel() {
+    function TrackModelWrapper() {
       useEffect(() => {
         console.log(rootEl.firstElementChild);
         const $appendEl = rootEl.firstElementChild;
@@ -196,17 +196,18 @@ export function createTrackModel(content, options, modelProps) {
           id: instanceId,
           ...options,
         });
+        modelInstances.push(instance);
         resolve({ close: instance.close, updatePosition });
       }, []);
       return createPortal(
-        <TrackModelComponent>
-          <div></div>
+        <TrackModelComponent {...renderModelProps}>
+          <Component {...(content?.props ?? {})}></Component>
         </TrackModelComponent>,
         rootEl,
       );
     }
     createRoot(document.getElementById("trackModelContainer")).render(
-      <TrackModel />,
+      <TrackModelWrapper />,
     );
 
     //step4:返回值

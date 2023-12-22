@@ -1,28 +1,26 @@
 <template>
   <transition name="track">
     <div v-if="visible" class="trackModel">
-      <div class="trackModelContent">
-        <div :style="props.contentStyle" class="content-box move-in">
-          <slot name="title">
-            <div class="trackModelTitle" :style="props.titleStyle">
-              <div>{{ props.title }}</div>
-            </div>
-            <img class="titleImage" src="./img/bg_title.png" alt="title" />
-          </slot>
-          <div
-            class="closeIcon"
-            :style="props.closeStyle"
-            @mouseover="isHover = true"
-            @mouseleave="isHover = false"
-            @click="handleClose"
-          >
-            <!--          由于这里hover事件可能比较频繁，用v-show改善性能-->
-            <img v-show="!isHover" src="./img/icon_close.png" alt="closeImage" />
-            <img v-show="isHover" src="./img/icon_close_click.png" alt="closeOverImage" />
+      <div :style="props.contentStyle" class="trackModelContent move-in">
+        <slot name="title">
+          <div class="trackModelTitle" :style="props.titleStyle">
+            <div>{{ props.title }}</div>
           </div>
-          <div class="trackModelBody">
-            <slot></slot>
-          </div>
+          <img class="titleImage" src="./img/bg_title.png" alt="title" />
+        </slot>
+        <div
+          class="closeIcon"
+          :style="props.closeStyle"
+          @mouseover="isHover = true"
+          @mouseleave="isHover = false"
+          @click="handleClose"
+        >
+          <!--          由于这里hover事件可能比较频繁，用v-show改善性能-->
+          <img v-show="!isHover" src="./img/icon_close.png" alt="closeImage" />
+          <img v-show="isHover" src="./img/icon_close_click.png" alt="closeOverImage" />
+        </div>
+        <div class="trackModelBody">
+          <slot></slot>
         </div>
       </div>
     </div>
@@ -57,6 +55,7 @@
       type: Function,
       default: () => true,
     },
+    // eslint-disable-next-line vue/require-default-prop
     afterClose: {
       type: Function,
     },
@@ -144,10 +143,15 @@
 <style lang="scss" scoped>
   @import 'track-model';
   .trackModel {
-    width: 100%;
-    height: 100%;
+    width: fit-content;
+    height: fit-content;
     color: #fff;
     user-select: none;
+    position: absolute;
+    z-index: $model-z-index;
+    //样式绑定
+    top: v-bind(styleTop);
+    left: v-bind(styleLeft);
   }
 
   .titleImage {
@@ -157,13 +161,6 @@
   }
 
   .trackModelContent {
-    position: absolute;
-    z-index: $model-z-index;
-    //样式绑定
-    top: v-bind(styleTop);
-    left: v-bind(styleLeft);
-  }
-  .content-box {
     //样式绑定
     width: v-bind(styleWidth) !important;
     height: v-bind(styleHeight) !important;

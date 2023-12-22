@@ -41,3 +41,12 @@ export class TrackModelError extends Error{
         this.name = 'TrackModelError'
     }
 }
+
+/**
+ * 输出警告信息
+ * @param message
+ */
+export function handleWarning(message){
+    message = `[TrackModel] ${message}`
+    console.warn(message)
+}
