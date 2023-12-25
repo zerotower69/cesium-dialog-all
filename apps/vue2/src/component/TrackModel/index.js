@@ -139,7 +139,7 @@ export function createTrackModel(slot, options, modelProps) {
     //找到对应的实例
     const selfInstance = getModelInstanceById(instanceId);
     //执行弹窗自带的关闭方法
-    selfInstance?.close?.();
+    selfInstance?.destroy?.();
     //执行传入的关闭方法
     modelProps?.afterClose?.();
   };
@@ -164,7 +164,7 @@ export function createTrackModel(slot, options, modelProps) {
     //TODO:移除当前存在的弹窗
     while (modelInstances.length) {
       const getInstance = modelInstances.shift();
-      getInstance?.close();
+      getInstance?.destroy();
     }
   }
 
@@ -195,17 +195,9 @@ export function createTrackModel(slot, options, modelProps) {
 
   modelInstances.push(instance);
 
-  /**
-   * 更新位置，以支持跟随移动
-   * @param {import('cesium').Cartesian3} cartesian
-   */
-  function updatePosition(cartesian) {
-    instance.updatePosition(cartesian);
-  }
-
   return {
     close: instance.close,
-    updatePosition,
+    updatePosition: instance.updatePosition,
   };
 }
 
