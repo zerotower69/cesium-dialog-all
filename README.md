@@ -1,14 +1,24 @@
 # cesium点位跟随弹窗的全框架实现
 
-> 通过抽取底层跟随逻辑，将UI部分分离交给各框架实现,
-> 实现了一个可支持多个前端框架的点位跟随弹窗。
+> 通过抽取底层逻辑，在[TrackModel](packages/common/src/core/index.js)定义中实现跟随逻辑，将UI部分结构分离交给各前端框架实现,
+> 实现了可支持多个前端框架的点位跟随弹窗。
 
-* 目前完成了Vue3、Vue2、React三个版本的具体实现，相关渲染过程以及调用方式请参考具体代码
+* 目前完成了[Vue3](apps/vue3/src/components/TrackModel/index.jsx)、[Vue2](apps/vue2/src/component/TrackModel/index.js)、[React](apps/react/src/components/TrackModel/index.jsx)三个版本的具体实现，相关渲染过程以及调用方式请参考具体代码。
 
 ## 功能说明
->目前除了基本的跟随功能，还实现了和Cesium实体（Entity）一样的超过指定相机高度自动隐藏（）,
-根据地图缩放而缩放()，显示动画等。此外，还支持当实体对象移动时（例如指定轨迹运动），弹窗保持跟随的接口
-(updatePosition)。
+>目前除了基本的跟随功能，还实现了和Cesium实体（Entity）类似的功能：
+> 
+> 1.超过指定相机高度自动隐藏（DistanceDisplayCondition）；
+> 
+> 2.根据地图缩放而缩放(NearFarScalar)。
+> 
+> 此外，还支持当实体对象移动时（例如指定轨迹运动），弹窗保持跟随的接口(updatePosition)。
+
+
+## 使用示例（Vue3实现版本）
+![vue3](imgs/vue3-afterfly.png)
+
+代码在[这里](apps/vue3/src/App.vue)
 
 ## 核心代码解读
 请参考[packages/common/src/core/index.js](packages/common/src/core/index.js)，
@@ -54,7 +64,7 @@
 
 #### `setRootEl`(rootEl,mounted)
 
-该方法的使用可参考React版本的实现
+该方法的使用可参考[React版本](apps/react/src/components/TrackModel/index.jsx)的实现
 
 ```js
 /**
