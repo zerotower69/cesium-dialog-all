@@ -8,7 +8,7 @@
   import { onMounted, ref } from 'vue';
   import { CesiumWorld } from '@common/common';
   import { createTrackModel } from '@/components/TrackModel';
-  import Cesium from 'cesium';
+  import * as Cesium from 'cesium';
 
   const cesiumRef = ref();
   onMounted(() => {
