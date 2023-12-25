@@ -1,14 +1,12 @@
-# zerotower-demo-template
+# cesium点位跟随弹窗的Vue3实现
 
-自用的快速demo搭建模板，省去每次重新搭建项目的繁琐。
+## 项目启动
+```bash
+pnpm vue3:dev
+```
+## 调用参考
+createTrackModel(slot,options,modelProps)
 
-分为vue3、vue2、react多个版本
-
-## vue3
-采用pnpm+vite的技术方案
-
-## vue2
-采用pnpm+vue-cli的技术方案
-
-## react
-待定
+## 注意事项
+需要在main.js中使用`setupTrackModel(app)`传入应用上下文以确保内容组件里可以使用全局注册的组件，
+api和指令等。
