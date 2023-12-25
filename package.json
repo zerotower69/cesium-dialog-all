@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "lint": ""
+    "build:vue3": "pnpm run -C apps/vue3 vue3:build"
   },
   "dependencies": {
     "@common/common": "workspace:^1.0.0",
