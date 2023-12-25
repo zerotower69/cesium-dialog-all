@@ -111,6 +111,7 @@ export class TrackModel{
     setRootEl(rootEl,mounted=false){
         this._$root = rootEl
         this._mounted=mounted
+        this._mountedOrFly()
     }
 
     /**
@@ -177,11 +178,6 @@ export class TrackModel{
         this._loaded = false;
         this._mounted = false;
         this.uid = options.id;
-        //说明一下,指定弹窗的根DOM可以在初始化完成，也可以通过setMountEl完成，但总要选择一样
-        //之所以这样设计，是为了适配更多的框架，例如react
-        if(options.rootEl){
-            this._$root = options.rootEl
-        }
         //set viewer instance
         this._viewer= options.viewer
         //set model offset
@@ -201,7 +197,19 @@ export class TrackModel{
             this._scaleByDistance= options?.scaleByDistance
             this._distanceDisplayCondition =options?.distanceDisplayCondition
         }
-        //mounted dom to widget
+        //说明一下,指定弹窗的根DOM可以在初始化完成，也可以通过setMountEl完成，但总要选择一样
+        //之所以这样设计，是为了适配更多的框架，例如react
+        if(options.rootEl){
+            this._$root = options.rootEl
+            this._mountedOrFly()
+        }
+        //用变量设置加载完成了
+        this._loaded=true
+    }
+
+    _mountedOrFly(){
+        const options =this._options;
+        //mounted dom to body
         if(options.show === 'beforeFly' || (!options.fly && options.show === 'afterFly')){
             //show为beforeFly 飞之前渲染弹窗，当不飞但是把show设置为了afterFly也要渲染弹窗
             //TODO:后面的情况在开发模式中抛出警告
@@ -211,8 +219,6 @@ export class TrackModel{
         if(options.fly){
             this.flyToPoint()
         }
-        //用变量设置加载完成了
-        this._loaded=true
     }
 
     /**

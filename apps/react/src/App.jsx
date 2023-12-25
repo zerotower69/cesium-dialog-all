@@ -30,7 +30,7 @@ function App() {
               y: -65,
             },
             fly: true,
-            // show: "afterFly",
+            show: "afterFly",
             flyOffset: {
               longitude: -0.011696,
               latitude: -0.097186,

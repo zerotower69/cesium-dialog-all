@@ -1,10 +1,16 @@
 //组件映射集合
 import { ReactTrackModel } from "@/components/TrackModel/track-model.js";
-import { cloneElement, createElement, useEffect } from "react";
+import {
+  cloneElement,
+  createElement,
+  forwardRef,
+  useEffect,
+  useRef,
+} from "react";
 import { createRoot } from "react-dom/client";
-import TrackModelComponent from "./TrackModel.jsx";
+import TrackModel from "./TrackModel.jsx";
 import { isNumber, isObject } from "lodash-es";
-import { flushSync } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 
 const componentMap = loadAllComponents();
 
@@ -146,7 +152,7 @@ export function createTrackModel(content, options, modelProps) {
     //找到对应的实例
     const selfInstance = getModelInstanceById(instanceId);
     //执行弹窗自带的关闭方法
-    selfInstance?.close?.();
+    selfInstance?.destroy?.();
     //执行传入的关闭方法
     modelProps?.afterClose?.();
   };
@@ -171,58 +177,38 @@ export function createTrackModel(content, options, modelProps) {
     //TODO:移除当前存在的弹窗
     while (modelInstances.length) {
       const getInstance = modelInstances.shift();
-      getInstance?.close();
+      getInstance?.close?.();
     }
   }
-  const rootEl = document.createElement("div");
-  // document.body.appendChild(rootEl);
-  let instance;
-  function TrackModel() {
-    // useEffect(() => {
-    //   resolve({ close: instance.close, updatePosition });
-    // }, []);
-    return (
-      <TrackModelComponent {...renderModelProps}>
-        <Component {...(content?.props ?? {})}></Component>
-      </TrackModelComponent>
-    );
-  }
-  //强制把异步的渲染过程
-  flushSync(() => {
-    createRoot(rootEl).render(<TrackModel />);
-  });
-
-  // console.log(rootEl.firstElementChild);
-  const $appendEl = rootEl.firstElementChild;
-  const $contentEl = $appendEl.querySelector(".trackModelContent");
-  // document.body.removeChild(rootEl);
-  //step3:实例化TrackModel
-  if (Reflect.has(options, "duration")) {
-    Reflect.deleteProperty(options, "duration");
-  }
-  instance = new ReactTrackModel({
-    rootEl: $appendEl,
-    contentEl: $contentEl,
+  const instance = new ReactTrackModel({
     id: instanceId,
     ...options,
   });
-
   modelInstances.push(instance);
+  const modalElement = document.createElement("div");
+  renderModelProps.setInstanceEl = function (el) {
+    instance.setRootEl(el, true);
+  };
 
-  //step4:返回值
-
-  /**
-   * 更新弹窗位置，以支持跟随实体
-   * @param {import('cesium').Cartesian3} cartesian
-   */
-  function updatePosition(cartesian) {
-    instance.updatePosition(cartesian);
+  function TrackModelWrapper(props) {
+    const childProps = content?.props ?? {};
+    return createPortal(
+      <TrackModel {...props} style={{ display: "none" }}>
+        <Component {...childProps} />
+      </TrackModel>,
+      document.body,
+    );
   }
+  flushSync(() => {
+    createRoot(modalElement).render(
+      <TrackModelWrapper {...renderModelProps}></TrackModelWrapper>,
+    );
+  });
+
   return {
     close: instance.close,
-    updatePosition,
+    updatePosition: instance.updatePosition,
   };
-  // });
 }
 
 /**
@@ -252,3 +238,5 @@ function loadAllComponents() {
 function getModelInstanceById(id) {
   return modelInstances.find((modelInstance) => modelInstance.uid === id);
 }
+
+export function openModel(Component) {}
