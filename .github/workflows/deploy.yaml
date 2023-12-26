@@ -5,7 +5,7 @@ name: Vue build for github pages
 on:
   push:
     branches:
-      - javascript
+      - deploy
   # 这个选项可以使你手动在 Action tab 页面触发工作流
   workflow_dispatch:
 
