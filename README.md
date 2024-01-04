@@ -22,7 +22,7 @@
 
 ## 核心代码解读
 请参考[packages/common/src/core/index.js](packages/common/src/core/index.js)，
-或者阅读我的[掘金文章]()。
+或者阅读我的[掘金文章](https://juejin.cn/post/7320039854229585960)。
 
 ## 底层TrackModel说明
 
@@ -102,7 +102,7 @@
 
 * React版本实现请参考[这里](apps/react/src/components/TrackModel/index.jsx)
 
-其它详细说明依旧欢迎你阅读我的[掘金文章]()
+其它详细说明依旧欢迎你阅读我的[掘金文章](https://juejin.cn/post/7320039854229585960)
 
 ## TypeScript版本实现
 > 为了方便喜欢TypeScript的小伙伴，将增加TypeScript的支持，相关代码在typescript分支中，
