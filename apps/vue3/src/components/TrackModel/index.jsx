@@ -1,6 +1,6 @@
 import TrackModelConstructor from './TrackModel.vue';
 import { isFunction, isNumber, isObject } from 'lodash-es';
-import { h, createVNode, render, getCurrentInstance, createApp } from 'vue';
+import { h, createVNode, render, getCurrentInstance} from 'vue';
 import { Vue3TrackModel } from '@/components/TrackModel/track-model';
 
 /**
@@ -202,7 +202,7 @@ export function createTrackModel(slot, options, modelProps) {
   const rootEl = document.createElement('div');
   //渲染为html
   render(vNode, rootEl);
-  const $appendEl = rootEl.firstElementChild;
+  const $appendEl = vNode.el;
   //*到这里，vue3的处理逻辑就结束了，剩下的过程已经是原生部分，任何框架下都一样了
   //step3:实例化trackModel
   const instance = new Vue3TrackModel({
@@ -248,17 +248,6 @@ function loadAllContentComponents() {
     map.set(name, component.default);
   });
   return map;
-
-  // const files = require.context("./content", false, /\.vue$/);
-  // const map = new Map();
-  // files.keys().forEach((key) => {
-  //   const mod = files(key).default;
-  //   const name = mod?.name ?? key.replace("./", "").replace(".vue", ""):
-  //   if (mod) {
-  //     map.set(name, mod);
-  //   }
-  // });
-  // return map;
 }
 
 /**

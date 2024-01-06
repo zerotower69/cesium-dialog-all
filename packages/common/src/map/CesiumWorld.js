@@ -135,6 +135,25 @@ export const CesiumWorld = {
         },
       });
     })
+
+    const hospitalUrl = Cesium.buildModuleUrl('Assets/Textures/maki/hospital.png');
+    const hospitalPin = Promise.resolve(
+        pinBuilder.fromUrl(hospitalUrl,Cesium.Color.YELLOW,48)
+    ).then((canvas)=>{
+      return _this.viewer.entities.add({
+        name:'皖东人民医院',
+        position:Cesium.Cartesian3.fromDegrees(118.351334,32.300967,0),
+        billboard: {
+          image: canvas.toDataURL(),
+          // scale: 1.0,
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          rotation: 0,
+          heightReference:Cesium.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 60000)
+        },
+      })
+    })
   },
   /**
    * cartesian3 坐标转wgs84坐标
