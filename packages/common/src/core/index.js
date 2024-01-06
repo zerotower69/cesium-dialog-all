@@ -2,16 +2,32 @@ import * as Cesium from "cesium"
 import {isNumber, isUndefined} from "lodash-es"
 import {handleWarning, setStyle,useRafFn} from "./common.js"
 
+let seed =1;
+
+/**
+ * 所有实例
+ * @type {TrackModel[]}
+ */
+const trackModelInstances=[];
+
+const listeners=[];
+
+function moveListener (){
+
+}
+
 /**
  * 默认options
  * @type {import('track-model').TrackModelOptions}
  */
-const defaultOptions={
+let defaultOptions={
     fly:false,
     show:'beforeFly',
     useObserver:true,
     autoScale:false
 }
+
+
 
 export class TrackModel{
 
@@ -101,6 +117,7 @@ export class TrackModel{
         }
         //初始化
         this._init()
+        trackModelInstances.push(this)
     }
 
     /**
@@ -167,6 +184,16 @@ export class TrackModel{
         }
         this._$root?.remove?.()
         this._clearListener()
+        //remove it from cache instances
+        const index = trackModelInstances.findIndex(instance=>instance.uid === this.uid);
+        if(index>-1){
+            trackModelInstances.splice(index,1)
+        }
+        //remove it's listener from listeners.
+        const fnIndex = listeners.findIndex(fn=>fn === this._moveListener)
+        if(fnIndex>-1){
+            listeners.splice(fnIndex,1)
+        }
     }
 
     /**
@@ -177,7 +204,7 @@ export class TrackModel{
         const options = this._options;
         this._loaded = false;
         this._mounted = false;
-        this.uid = options.id;
+        this.uid = options.id ?? seed++;
         //set viewer instance
         this._viewer= options.viewer
         //set model offset
@@ -250,6 +277,8 @@ export class TrackModel{
                 }
             }
         }
+        listeners.push(this._moveListener)
+        //TODO:如何实现单例模式和非单例模式下的并存
         this._viewer.scene.postRender.addEventListener(this._moveListener)
     }
 
@@ -415,4 +444,15 @@ export class TrackModel{
         }
     }
 
+}
+
+/**
+ * 设置默认配置
+ * @param {import('track-model').TrackModelOptions} options
+ */
+TrackModel.setDefaultOptions=function (options={}){
+  defaultOptions={
+      ...defaultOptions,
+      ...options
+  }
 }
