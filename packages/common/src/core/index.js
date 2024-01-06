@@ -1,6 +1,6 @@
 import * as Cesium from "cesium"
 import {isNumber, isUndefined} from "lodash-es"
-import {handleWarning, setStyle} from "./common.js"
+import {handleWarning, setStyle,useRafFn} from "./common.js"
 
 /**
  * 默认options
@@ -243,7 +243,9 @@ export class TrackModel{
             if (screen) {
                 if (screenPoint.x !== screen.x || screenPoint.y !== screen.y) {
                     //坐标发生变化就去更新弹窗位置
-                    _this._updateStyle(screen,_this._offset);
+                    useRafFn(()=>{
+                        _this._updateStyle(screen,_this._offset);
+                    })
                     screenPoint = screen;
                 }
             }

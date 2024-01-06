@@ -50,3 +50,64 @@ export function handleWarning(message){
     message = `[TrackModel] ${message}`
     console.warn(message)
 }
+
+/**
+ * 使用requestAnimationRequest执行函数
+ * @param fn 函数
+ * @param options
+ */
+export function useRafFn(fn,options={}){
+    const {immediate=true,fpsLimit=undefined}=options
+    const intervalLimit = fpsLimit ? 1000 / fpsLimit : null
+    let previousFrameTimestamp = 0
+    let rafId = null
+
+    let isActive =false;
+
+    //当前状态
+    function getActive(){
+        return isActive
+    }
+
+    /**
+     * 循环执行函数
+     * @param {DOMHighResTimeStamp} timestamp
+     */
+    function loop(timestamp){
+        if(!isActive){
+            return
+        }
+
+        const delta = timestamp - (previousFrameTimestamp || timestamp)
+
+        if (intervalLimit && delta < intervalLimit) {
+            rafId = window.requestAnimationFrame(loop)
+            return
+        }
+
+        fn({ delta, timestamp })
+
+        previousFrameTimestamp = timestamp
+        rafId = window.requestAnimationFrame(loop)
+    }
+
+    function resume(){
+        if(!isActive){
+            isActive=true;
+            rafId = window.requestAnimationFrame(loop)
+        }
+    }
+
+    function pause(){
+        isActive =false
+        if(!rafId){
+            window.cancelAnimationFrame(rafId)
+            rafId=null
+        }
+    }
+
+    if(immediate){
+        resume()
+    }
+
+}
