@@ -1,5 +1,5 @@
 import * as Cesium from "cesium"
-import {isNumber, isUndefined} from "lodash-es"
+import {isNumber, isObject, isUndefined} from "lodash-es"
 import {handleWarning, setStyle,useRafFn} from "./common.js"
 
 let seed =1;
@@ -9,8 +9,6 @@ let seed =1;
  * @type {TrackModel[]}
  */
 const trackModelInstances=[];
-
-const listeners=[];
 
 function moveListener (){
 
@@ -189,11 +187,6 @@ export class TrackModel{
         if(index>-1){
             trackModelInstances.splice(index,1)
         }
-        //remove it's listener from listeners.
-        const fnIndex = listeners.findIndex(fn=>fn === this._moveListener)
-        if(fnIndex>-1){
-            listeners.splice(fnIndex,1)
-        }
     }
 
     /**
@@ -267,6 +260,25 @@ export class TrackModel{
         this._moveListener= function (){
             //84坐标转屏幕坐标
             screen = viewer.scene.cartesianToCanvasCoordinates(_this._position);
+            if(!isObject(screen) || !isNumber(screen.x) || !isNumber(screen.y)){
+                //容错处理
+                return
+            }
+            const {innerHeight,innerWidth,outerHeight,outerWidth} = window
+            const rightBottomPoint = {
+                x:screen.x+_this._$root.clientWidth,
+                y:screen.y+_this._$root.clientHeight
+            }
+            if( rightBottomPoint.x <= 0
+                || rightBottomPoint.y <= 0
+                || screen.x > innerWidth
+                || screen.y > innerHeight)
+            {
+                return
+                // console.log('screen',_this.uid,screen)
+            } else {
+
+            }
             if (screen) {
                 if (screenPoint.x !== screen.x || screenPoint.y !== screen.y) {
                     //坐标发生变化就去更新弹窗位置
@@ -277,7 +289,6 @@ export class TrackModel{
                 }
             }
         }
-        listeners.push(this._moveListener)
         //TODO:如何实现单例模式和非单例模式下的并存
         this._viewer.scene.postRender.addEventListener(this._moveListener)
     }
@@ -456,3 +467,4 @@ TrackModel.setDefaultOptions=function (options={}){
       ...options
   }
 }
+

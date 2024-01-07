@@ -1,6 +1,6 @@
 import TrackModelConstructor from './TrackModel.vue';
 import { isFunction, isNumber, isObject } from 'lodash-es';
-import { h, createVNode, render, getCurrentInstance} from 'vue';
+import { h, createVNode, render, getCurrentInstance } from 'vue';
 import { Vue3TrackModel } from '@/components/TrackModel/track-model';
 
 /**
@@ -155,10 +155,12 @@ export function createTrackModel(slot, options, modelProps) {
   const afterClose = function () {
     //找到对应的实例
     const selfInstance = getModelInstanceById(instanceId);
-    //执行弹窗自带的关闭方法
-    selfInstance?.destroy?.();
-    //执行传入的关闭方法
-    modelProps?.afterClose?.();
+    Promise.resolve().then(() => {
+      //执行弹窗自带的关闭方法
+      selfInstance?.destroy?.();
+      //执行传入的关闭方法
+      modelProps?.afterClose?.();
+    });
   };
   //合并最终的props
   const renderModelProps = {
@@ -214,16 +216,18 @@ export function createTrackModel(slot, options, modelProps) {
   instance.setVNode(vNode);
   modelInstances.push(instance);
 
-  /**
-   * 更新弹窗位置，以支持实时移动
-   * @param {import('cesium').Cartesian3} cartesian
-   */
-  function updatePosition(cartesian) {
-    return instance.updatePosition(cartesian);
-  }
+  const destroyFn = instance.destroy;
+  //确保移除弹窗时正确触发组件的生命周期
+  instance.destroy = function () {
+    vNode.component.exposed.visible.value = false;
+    Promise.resolve().then(() => {
+      destroyFn.call();
+    });
+  };
+
   return {
     destroy: instance.destroy,
-    updatePosition,
+    updatePosition: instance.updatePosition,
   };
 }
 

@@ -90,14 +90,17 @@
 
   //关闭弹窗
   function handleClose() {
-    const exposed = getCurrentInstance()?.exposed;
-    if (isFunction(props.beforeClose) && props.beforeClose) {
+    if (isFunction(props.beforeClose)) {
       //beforeClose执行返回true才允许关闭弹窗
-      if (exposed?.handleClose) {
-        exposed.handleClose();
-      } else {
+      if (props.beforeClose()) {
         visible.value = false;
+        if (isFunction(props.afterClose)) {
+          //弹窗关闭后执行的逻辑
+          props.afterClose();
+        }
       }
+    } else {
+      visible.value = false;
       if (isFunction(props.afterClose)) {
         //弹窗关闭后执行的逻辑
         props.afterClose();
@@ -135,8 +138,7 @@
     }
   });
   defineExpose({
-    handleClose,
-    handleOpen,
+    visible,
   });
 </script>
 
